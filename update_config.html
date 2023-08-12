@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Configuration Editor</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <table>
+        <thead>
+            <tr>
+                <th>Config Item</th>
+                <th>Config Value</th>
+                <th>Edit</th>
+            </tr>
+        </thead>
+        <tbody id="config-table-body"></tbody>
+    </table>
+
+    <script>
+        function createConfigTable() {
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        var config = JSON.parse(xhr.responseText);
+                        for (var key in config) {
+                            var value = config[key];
+                            var tr = document.createElement('tr');
+                            tr.dataset.key = key;
+
+                            var tdKey = document.createElement('td');
+                            tdKey.textContent = key;
+                            tr.appendChild(tdKey);
+
+                            var tdValue = document.createElement('td');
+                            tdValue.textContent = value;
+                            tr.appendChild(tdValue);
+
+                            var tdEdit = document.createElement('td');
+                            var btnEdit = document.createElement('button');
+                            btnEdit.textContent = 'Edit';
+                            btnEdit.onclick = function() {
+                                tdValue.innerHTML = '';
+                                var input = document.createElement('input');
+                                input.type = 'text';
+                                input.value = value;
+                                tdValue.appendChild(input);
+                                var btnSave = document.createElement('button');
+                                btnSave.textContent = 'Save';
+                                btnSave.onclick = function() {
+                                    var newValue = input.value;
+                                    tdValue.textContent = newValue;
+                                    btnEdit.style.display = '';
+                                    btnSave.style.display = 'none';
+                                    btnCancel.style.display = 'none';
+                                    config[key] = newValue;
+                                    saveConfig(config);
+                                };
+                                tdEdit.appendChild(btnSave);
+                                var btnCancel = document.createElement('button');
+                                btnCancel.textContent = 'Cancel';
+                                btnCancel.onclick = function() {
+                                    tdValue.textContent = value;
+                                    btnEdit.style.display = '';
+                                    btnSave.style.display = 'none';
+                                    btnCancel.style.display = 'none';
+                                };
+                                tdEdit.appendChild(btnCancel);
+                                btnEdit.style.display = 'none';
+                                btnSave.style.display = '';
+                                btnCancel.style.display = '';
+                            };
+                            tdEdit.appendChild(btnEdit);
+                            tr.appendChild(tdEdit);
+
+                            document.getElementById('config-table-body').appendChild(tr);
+                        }
+                    } else {
+                        console.log('Failed to get config file.');
+                    }
+                }
+            };
+            xhr.open('GET', 'config.json');
+            xhr.send();
+        }
+
+        function loadConfig() {
+            fetch('/config')
+                .then(response => response.json())
+                .then(config => {
+                    const tableBody = document.querySelector('#config-table tbody');
+                    for (const [key, value] of Object.entries(config)) {
+                        const row = tableBody.insertRow();
+                        const cell1 = row.insertCell(0);
+                        const cell2 = row.insertCell(1);
+                        const cell3 = row.insertCell(2);
+
+                        cell1.innerHTML = key;
+                        cell2.innerHTML = value;
+
+                        const editButton = document.createElement('button');
+                        editButton.textContent = 'Edit';
+                        cell3.appendChild(editButton);
+
+                        editButton.addEventListener('click', () => {
+                            cell2.innerHTML = `<input type="text" value="${value}" />`;
+                            cell3.innerHTML = `
+                                <button class="save-button">Save</button>
+                                <button class="cancel-button">Cancel</button>
+                            `;
+
+                            const saveButton = cell3.querySelector('.save-button');
+                            saveButton.addEventListener('click', () => {
+                                const newValue = cell2.querySelector('input').value;
+                                saveConfig({[key]: newValue});
+                            });
+
+                            const cancelButton = cell3.querySelector('.cancel-button');
+                            cancelButton.addEventListener('click', () => {
+                                cell2.innerHTML = value;
+                                cell3.innerHTML = '';
+                                cell3.appendChild(editButton);
+                            });
+                        });
+                    }
+                })
+                .catch(err => console.error('Error fetching config:', err));
+            }
+            
+            function saveConfig(config) {
+                fetch('/config', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(config)
+                })
+                    .then(() => {
+                        alert('Config saved successfully!');
+                        location.reload();
+                    })
+                    .catch(err => console.error('Error saving config:', err));
+            }
+            loadConfig();
+    </script>
+</body>
+</html>
