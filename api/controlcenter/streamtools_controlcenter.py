@@ -12,34 +12,52 @@ from pick_audio import pick_audio
 # Read server port and content library from config.json file
 with open('config.json', 'r') as f:
     config = json.load(f)
+    server_bind_address = config['server_bind_address']
+    print(server_bind_address)
     server_port = config['server_port']
+    print(server_port)
     content_library = config['content_library']
     # Read content library from content.json file
 with open('content.json', 'r') as f:
     content = json.load(f)
 
+# TODO: eventually replace with something a bit more secure
 class MyHandler(http.server.SimpleHTTPRequestHandler):
+    def get_root(self):
+        # Read the template file
+        with open('api\controlcenter\streamtools.html', 'r') as file:
+            template = file.read()
+        # Populate the template with the file list
+        file_list = "<ul>"
+        for path in content.items():
+            file_list += f"<li>{path[0]}: <button onclick='playAudio(\"{urllib.parse.quote(path[0])}\", \"{path[0]}\", \"{path[0]}\")'>Play " + path[0] + " on server</button></li>"
+        file_list += "</ul>"
+        return template.format(clips=file_list)
+    def get_config(self):
+        with open('api\controlcenter\settings.html', 'r') as file:
+                template = file.read()
     def do_GET(self):
         if self.path == '/':
+            message = self.get_root()
+            if message == None:
+              self.send_response(500)
+              print("ERROR")
+            else:
+                self.send_response(200)
+                self.send_header('Server', '')
+                self.send_header('X-Frame-Options', 'DENY')
+                self.send_header('Content-Security-Policy', "'frame-ancestors 'self'; unsafe-inline 'self' script-src 'self''")
+                self.send_header('Content-type', 'text/html')
+                self.send_header('X-Content-Type-Options', 'nosniff')
+                self.end_headers()
+                self.wfile.write(bytes(message, "utf8"))
+        elif self.path == '/settings':
             self.send_response(200)
             self.send_header('Content-type', 'text/html')
             self.end_headers()
-
-            # Read the template file
-            with open('streamtools.html', 'r') as file:
-                template = file.read()
-
-            # Populate the template with the file list
-            file_list = "<ul>"
-            for path in content.items():
-                file_list += f"<li>{path[0]}: <button onclick='playAudio(\"{urllib.parse.quote(path[0])}\", \"{path[0]}\", \"{path[0]}\")'>Play " + path[0] + " on server</button></li>"
-            file_list += "</ul>"
-            message = template.format(clips=file_list)
             self.wfile.write(bytes(message, "utf8"))
         else:
             super().do_GET()
-
-    
     def do_POST(self):
         global audio_proc
         if self.path == '/play':
@@ -47,13 +65,14 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
             post_data = self.rfile.read(content_length).decode('utf-8')
             random_audio_file = pick_audio(post_data, content)
             file_path = os.path.join(urllib.parse.unquote(random_audio_file.path))
-            proc = subprocess.Popen(['py', 'play_audio.py', file_path])
+            proc = subprocess.Popen(['py', 'api\controlcenter\play_audio.py', file_path])
             time.sleep(config['clip_duration'])
             proc.terminate()
             self.send_response(200)
+            self.send_header('X-Content-Type-Options', 'nosniff')
             self.end_headers()
 
-        elif self.path == '/update_config':
+        elif self.path == '/settings':
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length).decode('utf-8')
             try:
@@ -61,8 +80,10 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 with open('config.json', 'w') as f:
                     json.dump(new_config, f)
                 self.send_response(200)
+                self.send_header('X-Content-Type-Options', 'nosniff')
             except:
                 self.send_response(400)
+                self.send_header('X-Content-Type-Options', 'nosniff')
             self.end_headers()
         else:
             super().do_POST()
@@ -84,9 +105,9 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
 
 if __name__ == '__main__':
     Handler = MyHandler
-
-    with socketserver.TCPServer(("", server_port), Handler) as httpd:
-        print(f"Serving at port {server_port}")
+    print(str.format("{host}:{port}",host = server_bind_address, port = server_port))
+    with socketserver.TCPServer((server_bind_address, server_port), Handler) as httpd:
+        print(f"Serving at {httpd.server_address}")
         t = threading.Thread(target=httpd.serve_forever)
         t.daemon = True
         t.start()
