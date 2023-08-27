@@ -2,4 +2,5 @@ config.json
 content.json
 api/overlays
 api/__pycache__
+api/controlcenter/__pycache__
 __pycache__
