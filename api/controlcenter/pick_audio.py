@@ -1,18 +1,23 @@
 import os
 import random
+import streamtools_settings as s
+from typing import List, Optional, Dict
 
-class Selected_File:
-    def __init__(self, directory, name, path):
-        self.directory = directory
-        self.name = name
-        self.path = path
-def pick_audio(path, contents):
-    directory = ''
-    if path in contents:
-        directory = contents[path]
-    files = os.listdir(directory)
-    audio_files = [file for file in files if file.endswith(".mp3") or file.endswith(".wav")]
-    if audio_files:
-        random_audio_file = random.choice(audio_files)
-        selected_file = Selected_File(path, random_audio_file,os.path.join(directory,random_audio_file))
-    return selected_file
+# Add logic to handle more file types: mp3, wav, ogg, flac, etc...
+# Probably needs a call to ffmpeg or something
+def pick_audio(path: str):
+    try:
+        files = valid_files(os.scandir(s.content[path]))
+        return random.choice(files)
+    except FileNotFoundError:
+        return None
+
+# Check filetype against supported list
+def valid_files(dir):
+    output = []
+    for entry in dir:
+        if entry.is_file(follow_symlinks=False):
+            for extension in s.config['supported_audio_extensions']:
+                if entry.path.endswith(extension):
+                    output.append(entry)
+    return output

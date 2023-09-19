@@ -1,26 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>List of Files</title>
-    <script>
-        var audioObject = null;
-        function playAudio(directory) {{
-            if (audioObject) {{
-                audioObject.pause();
-                audioObject.currentTime = 0;
-                audioObject = null;
-            }}
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', '/play');
-            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xhr.send(directory);
-            audioObject = new Audio();
-            audioObject.play();
-        }}
-    </script>
+    <title>StreamTools ControlCenter</title>
 </head>
 <body>
-    <h1>List of Files:</h1>
-    {clips}
+    <h1>Thank you for using StreamTools ControlCenter!</h1>
+    <p>You're probably trying to use StreamTools CommandCenter. These handy links will help you get started!</p>
+    <p>
+        Click here to play audio clips: <a href="/clips">ControlCenter Clips</a><br/>
+        Click here to view settings: <a href="/settings">ControlCenter Settings</a><br/>
+    </p>
+    <p>Have fun!<br/></p>
+    <h7><a href=https://github.com/hqsolomo/StreamTools>StreamTools ControlCenter, written by hqsolomo</a></h7>
 </body>
 </html>

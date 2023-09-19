@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Audio Clips</title>
+    <script>
+        var audioObject = null;
+        function playAudio(directory) {{
+            if (audioObject) {{
+                audioObject.pause();
+                audioObject.currentTime = 0;
+                audioObject = null;
+            }}
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/play');
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.send(directory);
+            audioObject = new Audio();
+            audioObject.play();
+        }}
+    </script>
+</head>
+<body>
+    <h1>List of Clip Categories:</h1>
+    {clips}
+</body>
+</html>
