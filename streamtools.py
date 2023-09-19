@@ -2,7 +2,7 @@ import os
 import subprocess
 import tkinter as tk
 from api.controlcenter.st_process import ST_Process
-import api.controlcenter.streamtools_settings as s
+import api.controlcenter.st_settings as s
 
 # UI for StreamTools api.
 #TODO: implement more than just controlcenter
