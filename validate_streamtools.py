@@ -1,6 +1,6 @@
 import subprocess
 import sys
-import api.controlcenter.streamtools_settings as s
+import api.controlcenter.st_settings as s
 from tkinter import messagebox
 
 
