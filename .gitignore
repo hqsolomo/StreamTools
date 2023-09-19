@@ -6,3 +6,4 @@ api/controlcenter/__pycache__
 validate_streamtools.py
 tests/data
 tests/controlcenter/__pycache__
+.vscode
