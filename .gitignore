@@ -1,6 +1,8 @@
 config.json
 content.json
-api/overlays
+__pycache__
 api/__pycache__
 api/controlcenter/__pycache__
-__pycache__
+validate_streamtools.py
+tests/data
+tests/controlcenter/__pycache__
